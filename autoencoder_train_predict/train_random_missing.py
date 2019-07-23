@@ -100,6 +100,15 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
             missing_ones = np.ones_like(sample) - sample
 
             corrupted = temp * sample
+
+            # Added this
+            for i, j in corrupted:
+                if i == -99999999:
+                    i = 0
+                if j == -99999999:
+                    j = 0
+
+
             corrupted_batch = np.asarray(corrupted).astype("float32")
 
             train_loss_val, _ = session.run([loss, optimizer],
