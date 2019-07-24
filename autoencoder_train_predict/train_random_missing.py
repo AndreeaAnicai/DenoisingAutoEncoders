@@ -4,8 +4,13 @@ import time
 
 import numpy as np
 import pandas as pd
+import tensorflow as tf
+from matplotlib import pyplot as plt
 
 from autoencoder import *
+from sklearn import preprocessing
+
+from autoencoder_train_predict.autoencoder import autoencoder4_d
 
 
 def get_next_batch(dataset, batch_size, step, ind):
@@ -33,6 +38,20 @@ def calculate_nrmse_loss(reconstructed, input_shape):
                                                 axis=0)))
 
     return original, rmse, missing_mask
+
+'''
+loss_val_list_train, loss_val_list_test
+def plot_loss(autoencoder_train, epochs):
+    loss = autoencoder_train.history['loss']
+    # val_loss = autoencoder_train.history['val_loss']
+    epochs = range(epochs)
+    plt.figure()
+    plt.plot(epochs, loss, 'bo', label='Training loss')
+    # plt.plot(epochs, val_loss, 'b', label='Validation loss')
+    plt.title('Training and validation loss')
+    plt.legend()
+    plt.show()
+'''
 
 
 def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, autoencoder_fun,
@@ -102,12 +121,7 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
             corrupted = temp * sample
 
             # Added this
-            for i, j in corrupted:
-                if i == -99999999:
-                    i = 0
-                if j == -99999999:
-                    j = 0
-
+            corrupted[corrupted == -99999999] = 0.0
 
             corrupted_batch = np.asarray(corrupted).astype("float32")
 
@@ -191,14 +205,18 @@ if __name__ == '__main__':
     perc_csf = 0.83
     perc_mri = 0.62
 
-    batch_size = 128
-    lr = 0.001
+    batch_size = 20
+    lr = 0.01
     num_epochs = 100
 
     df = pd.read_csv(input_name)
+
+    # Replace nan values from array
+    df = df.replace(np.nan, 0)
+    df = df.replace(-99999999, 0)
     # df.drop(df.columns[[0]], axis=1, inplace=True)
 
-    # Create set for training & validation, and for testing
+    # Create set for training & validation
     arr = list(range(df.shape[0]))
     random.seed(1)
     random.shuffle(arr)
@@ -207,7 +225,7 @@ if __name__ == '__main__':
     df_use = df.iloc[use_ind]
     df_holdout = df.iloc[holdout_ind]
 
-    #
+    # Create set for testing
     arr = list(range(df_use.shape[0]))
     random.seed(1)
     random.shuffle(arr)
@@ -216,13 +234,28 @@ if __name__ == '__main__':
     dataset_train = df_use.iloc[train_ind]
     dataset_test = df_use.iloc[test_ind]
 
+    # Scale datasets
+    names_train = dataset_train.columns
+    scaler = preprocessing.StandardScaler()
+    scaled_df = scaler.fit_transform(dataset_train)
+    dataset_train = pd.DataFrame(scaled_df, columns=names_train)
+
+    names_test = dataset_test.columns
+    scaled_df = scaler.fit_transform(dataset_test)
+    dataset_test = pd.DataFrame(scaled_df, columns=names_test)
+
+    # print("The number of nan values in train is: ", np.count_nonzero(np.isnan(dataset_train)))
+
     batch_shape = (batch_size, feature_size)
     np.set_printoptions(threshold=np.inf)
     tf.reset_default_graph()
+
+    # Train model
     loss_val_list_train, loss_val_list_test = train(perc_dem, perc_cog, perc_csf, perc_mri,
                                                     dataset_train,
                                                     dataset_test,
                                                     autoencoder_fun=autoencoder4_d, sav=True,
                                                     restore=False, checkpoint_file=output_path)
+
     np.savetxt("trainloss.csv", loss_val_list_train, delimiter="\t")
     np.savetxt("validationloss.csv", loss_val_list_test, delimiter="\t")

@@ -8,7 +8,9 @@ from autoencoder import *
 import random
 import numpy as np
 
-        
+from individualProject.autoencoder_train_predict.autoencoder import autoencoder4_d
+
+
 def reconstruct_loss(dataset_test_uncorrutped, dataset_test, autoencoder_fun,
                      checkpoint_file='default.ckpt', missing_ind=None):
     input_image, reconstructed_image = autoencoder_fun(batch_shape)
@@ -54,10 +56,11 @@ if __name__ == '__main__':
         # model_path = sys.argv[3] # 'imputationmodel.ckpt'
         # feature_size = sys.argv[4] # Dimension of the feature, 17176
         # nonmissing_perc = sys.argv[5] # Percent of non-missing elements in the data, 0.7
-        input_name = 'onlyNumericValuesZeros.csv'
-        output_path = 'testloss_onlyNumericValuesZeros.csv'
+
+        input_name = 'deleted_missing_final.csv'
+        output_path = 'testloss_final_dataset.csv'
         model_path = 'models/imputationmodel.ckpt'
-        feature_size = 1442
+        feature_size = 402
         nonmissing_perc = 1.0
 
         holdout_cohort = pd.read_csv(input_name)
