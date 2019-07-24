@@ -7,8 +7,10 @@ import time
 from autoencoder import *
 import random
 import numpy as np
+from sklearn import preprocessing
 
-from individualProject.autoencoder_train_predict.autoencoder import autoencoder4_d
+
+from autoencoder_train_predict.autoencoder import autoencoder4_d
 
 
 def reconstruct_loss(dataset_test_uncorrutped, dataset_test, autoencoder_fun,
@@ -50,12 +52,6 @@ def mask_dfrow(row, perc):
 
 
 if __name__ == '__main__':
-    
-        # input_name = sys.argv[1] # 'testdata_100sample.csv'
-        # output_path = sys.argv[2] # "testloss_100sample.csv"
-        # model_path = sys.argv[3] # 'imputationmodel.ckpt'
-        # feature_size = sys.argv[4] # Dimension of the feature, 17176
-        # nonmissing_perc = sys.argv[5] # Percent of non-missing elements in the data, 0.7
 
         input_name = 'deleted_missing_final.csv'
         output_path = 'testloss_final_dataset.csv'
@@ -64,6 +60,14 @@ if __name__ == '__main__':
         nonmissing_perc = 1.0
 
         holdout_cohort = pd.read_csv(input_name)
+        holdout_cohort = holdout_cohort.replace(np.nan, 0)
+        holdout_cohort = holdout_cohort.replace(-99999999, 0)
+
+        # Scale datasets
+        names_holdout = holdout_cohort.columns
+        scaler = preprocessing.StandardScaler()
+        scaled_df = scaler.fit_transform(holdout_cohort)
+        holdout_cohort = pd.DataFrame(scaled_df, columns=names_holdout)
 
         np.random.seed(1)
         corrupted_holdout_cohort = holdout_cohort.apply(mask_dfrow, perc=nonmissing_perc, axis=1)

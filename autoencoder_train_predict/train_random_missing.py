@@ -39,20 +39,6 @@ def calculate_nrmse_loss(reconstructed, input_shape):
 
     return original, rmse, missing_mask
 
-'''
-loss_val_list_train, loss_val_list_test
-def plot_loss(autoencoder_train, epochs):
-    loss = autoencoder_train.history['loss']
-    # val_loss = autoencoder_train.history['val_loss']
-    epochs = range(epochs)
-    plt.figure()
-    plt.plot(epochs, loss, 'bo', label='Training loss')
-    # plt.plot(epochs, val_loss, 'b', label='Validation loss')
-    plt.title('Training and validation loss')
-    plt.legend()
-    plt.show()
-'''
-
 
 def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, autoencoder_fun,
           restore=False, sav=True, checkpoint_file='default.ckpt'):
@@ -121,7 +107,7 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
             corrupted = temp * sample
 
             # Added this
-            corrupted[corrupted == -99999999] = 0.0
+            # corrupted[corrupted == -99999999] = 0.0
 
             corrupted_batch = np.asarray(corrupted).astype("float32")
 
@@ -187,13 +173,6 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
 # with tf.Graph().as_default():
 
 if __name__ == '__main__':
-    # input_name = sys.argv[1]  # 'rna_naremoved_logtransformed_normalized.csv'
-    # output_path = sys.argv[2]  # 'imputationmodel.ckpt'
-    # feature_size = sys.argv[3]  # Dimension of the feature, 17176
-    # nonmissing_perc = sys.argv[4]  # Percent of non-missing elements in the data, 0.7
-    # batch_size = sys.argv[5]  # 128
-    # lr = sys.argv[6]  # 0.1
-    # num_epochs = sys.argv[7]  # 450
 
     input_name = 'deleted_missing_final.csv'
     output_path = 'imputationmodel.ckpt'
@@ -207,7 +186,8 @@ if __name__ == '__main__':
 
     batch_size = 20
     lr = 0.01
-    num_epochs = 100
+    # TRY LARGER!
+    num_epochs = 450
 
     df = pd.read_csv(input_name)
 
