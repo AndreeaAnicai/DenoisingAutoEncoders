@@ -6,6 +6,7 @@ from numpy import zeros
 import pandas as pd
 from scipy import linalg
 from scipy.linalg import svd
+from sklearn import preprocessing
 
 
 def svd_reconstruct():
@@ -33,9 +34,23 @@ def svd_reconstruct():
     S = np.diag(s)
     B = np.dot(U, np.dot(S, Vh))
 
+    # Scale datasets
+
+    names_A = A.columns
+    scaler = preprocessing.StandardScaler()
+    scaled_df = scaler.fit_transform(A)
+    A = pd.DataFrame(scaled_df, columns=names_A)
+
+    B = pd.DataFrame(B)
+    names_B = B.columns
+    scaler = preprocessing.StandardScaler()
+    scaled_df = scaler.fit_transform(B)
+    B = pd.DataFrame(scaled_df, columns=names_B)
+
+
     # Compute loss
-    mse = (np.square(A - B)).mean(axis=None)
-    mse = mse.mean()
+    mse = (np.square(A.to_numpy() - B.to_numpy())).mean(axis=None)
+    # mse = mse.mean()
     print(mse)
 
 
