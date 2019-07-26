@@ -9,7 +9,7 @@ def plot_loss():
 
     plt.plot(loss)
     plt.plot(val_loss)
-    plt.title('Training vs validation loss')
+    plt.title('Training vs validation loss for dataset')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Train', 'Validation'], loc='upper left')
@@ -27,5 +27,5 @@ def plot_pred():
 
 
 if __name__ == '__main__':
-    # plot_loss()
-    plot_pred()
+    plot_loss()
+    # plot_pred()

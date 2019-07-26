@@ -11,7 +11,7 @@ from sklearn import preprocessing
 
 def svd_reconstruct():
 
-    A = pd.read_csv('deleted_missing_final.csv')
+    A = pd.read_csv('dataset_ad.csv')
 
     # Replace nan values from array
     A = A.replace(np.nan, 0)
@@ -46,7 +46,6 @@ def svd_reconstruct():
     scaler = preprocessing.StandardScaler()
     scaled_df = scaler.fit_transform(B)
     B = pd.DataFrame(scaled_df, columns=names_B)
-
 
     # Compute loss
     mse = (np.square(A.to_numpy() - B.to_numpy())).mean(axis=None)

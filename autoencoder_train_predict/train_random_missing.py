@@ -180,9 +180,9 @@ if __name__ == '__main__':
 
     # nonmissing_perc = 0.7
     perc_dem = 0.7
-    perc_cog = 0.28
-    perc_csf = 0.83
-    perc_mri = 0.62
+    perc_cog = 0.785
+    perc_csf = 0.949
+    perc_mri = 0.886
 
     batch_size = 20
     lr = 0.01

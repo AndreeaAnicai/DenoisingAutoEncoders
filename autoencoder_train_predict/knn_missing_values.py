@@ -7,7 +7,7 @@ from fancyimpute import KNN
 if __name__ == '__main__':
 
     # We use the train dataframe from Titanic dataset fancy impute removes column names.
-    A = pd.read_csv('deleted_missing_final.csv')
+    A = pd.read_csv('dataset_mci.csv')
 
     # Replace nan values from array
     A = A.replace(np.nan, -99999999)
