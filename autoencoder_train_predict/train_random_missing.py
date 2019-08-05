@@ -179,10 +179,10 @@ if __name__ == '__main__':
     feature_size = 402
 
     # nonmissing_perc = 0.7
-    perc_dem = 0.7
-    perc_cog = 0.785
-    perc_csf = 0.949
-    perc_mri = 0.886
+    perc_dem = 0.9
+    perc_cog = 0.9928444444
+    perc_mri = 0.996215869180797
+    perc_csf = 0.9983
 
     batch_size = 20
     lr = 0.01

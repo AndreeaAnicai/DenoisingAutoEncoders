@@ -1,6 +1,8 @@
+import pandas as pd
 import tensorflow as tf
 
 from layers import *
+import numpy as np
 
 
 def encoder4_d(input):
@@ -24,6 +26,7 @@ def decoder4_d(input):
     fc_dec1 = fc(input, 'fc_dec1', 100)
     fc_dec2 = fc(fc_dec1, 'fc_dec2', 200)
     fc_dec3 = fc(fc_dec2, 'fc_dec3', 402)
+
     return fc_dec3
 
 
@@ -42,6 +45,13 @@ def autoencoder4_d(input_shape):
     with tf.variable_scope('autoencoder') as scope:
         encoding = encoder4_d(input_image)
         reconstructed_image = decoder4_d(encoding)
+        tf.io.write_file(
+            "Reconstructed_image_whole.csv",
+            reconstructed_image,
+            name=None
+        )
+        np.savetxt("whole_encoded.csv", reconstructed_image, delimiter=",")
+        # np.savetxt("Reconstructed_image_whole.csv", reconstructed_image, delimiter=",")
     return input_image, reconstructed_image
 
 

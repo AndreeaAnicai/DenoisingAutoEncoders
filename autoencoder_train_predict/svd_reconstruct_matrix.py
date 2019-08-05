@@ -37,22 +37,23 @@ def svd_reconstruct():
     scaled_df = scaler.fit_transform(A)
     A = pd.DataFrame(scaled_df, columns=names_A)
 
+    # Mask 30% of values from A
+    frac = 0.8
+    sample = np.random.binomial(1, frac, size=A.shape[0] * A.shape[1])
+    sample2 = sample.reshape(A.shape[0], A.shape[1])
+    corrupted = A * sample2
+
     # Replace nans with 0
     A = A.replace(np.nan, 0)
+    corrupted = corrupted.replace(np.nan, 0.0)
 
     # Singular-value decomposition
-    U, s, Vh = linalg.svd(A, full_matrices=False)
+    U, s, Vh = linalg.svd(corrupted, full_matrices=False)
     # Populate Sigma with n x n diagonal matrix
     S = np.diag(s)
     # Reconstruct matrix
     B = np.dot(U, np.dot(S, Vh))
     B = pd.DataFrame(B)
-
-    # Mask 30% of values from predicted
-    frac = 0.7
-    sample = np.random.binomial(1, frac, size=B.shape[0] * B.shape[1])
-    sample2 = sample.reshape(B.shape[0], B.shape[1])
-    corrupted = B * sample2
 
     # Create missing value mask
     corrupted = corrupted.replace(0.0, np.nan)
@@ -60,6 +61,7 @@ def svd_reconstruct():
     missing_ones_corrupted = missing_ones_corrupted.replace(np.nan, 1)
 
     missing_ones = np.add(missing_ones_A, missing_ones_corrupted)
+    missing_ones = missing_ones.replace(2.0, 1.0)
 
     # # Compute loss
     # mse = (np.square(A.to_numpy() - B.to_numpy())).mean(axis=None)

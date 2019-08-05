@@ -19,7 +19,7 @@ def calculate_nrmse_loss(reconstructed, original, missing_ones):
 if __name__ == '__main__':
 
     # We use the train dataframe from Titanic dataset fancy impute removes column names.
-    A = pd.read_csv('dataset_mci.csv')
+    A = pd.read_csv('dataset_ad.csv')
 
     # Replace nan values from array
     A = A.replace(np.nan, -99999999)
@@ -31,26 +31,26 @@ if __name__ == '__main__':
     scaled_df = scaler.fit_transform(A)
     A = pd.DataFrame(scaled_df, columns=names_A)
 
+    # Mask 30% of values from A
+    frac = 0.8
+    sample = np.random.binomial(1, frac, size=A.shape[0] * A.shape[1])
+    sample2 = sample.reshape(A.shape[0], A.shape[1])
+    corrupted = A * sample2
+
     # Use 5 nearest rows which have a feature to fill in each row's missing features
-    A_filled_knn = KNN(k=5).fit_transform(A)
+    A_filled_knn = KNN(k=5).fit_transform(corrupted)
     A_filled_knn = pd.DataFrame(A_filled_knn)
 
-    # Mask 30% of values from predicted
-    frac = 0.7
-    sample = np.random.binomial(1, frac, size=A_filled_knn.shape[0] * A_filled_knn.shape[1])
-    sample2 = sample.reshape(A_filled_knn.shape[0], A_filled_knn.shape[1])
-
-    corrupted = A_filled_knn * sample2
-
     # Create mask for loss, both for the original matrix A and for the predicted matrix with 30% masked
-    missing_ones_A = A * 0
-    missing_ones_A = missing_ones_A.replace(np.nan, 1)
-
     corrupted = corrupted.replace(0.0, np.nan)
     missing_ones_corrupted = corrupted * 0
     missing_ones_corrupted = missing_ones_corrupted.replace(np.nan, 1)
 
+    missing_ones_A = A * 0
+    missing_ones_A = missing_ones_A.replace(np.nan, 1)
+
     missing_ones = np.add(missing_ones_A, missing_ones_corrupted)
+    missing_ones = missing_ones.replace(2.0, 1.0)
 
     A = A.replace(np.nan, 0)
 
