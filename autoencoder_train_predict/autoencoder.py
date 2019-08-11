@@ -45,13 +45,7 @@ def autoencoder4_d(input_shape):
     with tf.variable_scope('autoencoder') as scope:
         encoding = encoder4_d(input_image)
         reconstructed_image = decoder4_d(encoding)
-        tf.io.write_file(
-            "Reconstructed_image_whole.csv",
-            reconstructed_image,
-            name=None
-        )
-        np.savetxt("whole_encoded.csv", reconstructed_image, delimiter=",")
-        # np.savetxt("Reconstructed_image_whole.csv", reconstructed_image, delimiter=",")
+
     return input_image, reconstructed_image
 
 

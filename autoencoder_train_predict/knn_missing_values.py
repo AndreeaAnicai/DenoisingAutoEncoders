@@ -4,6 +4,7 @@ from sklearn import preprocessing
 from fancyimpute import KNN
 import tensorflow as tf
 from sklearn.neighbors import KNeighborsClassifier
+from scipy.stats import zscore
 
 
 def calculate_nrmse_loss(reconstructed, original, missing_ones):
@@ -25,14 +26,18 @@ if __name__ == '__main__':
     A = A.replace(np.nan, -99999999)
     A = A.replace(-99999999, np.nan)
 
+    '''
     # Scale dataset
     names_A = A.columns
     scaler = preprocessing.StandardScaler()
     scaled_df = scaler.fit_transform(A)
     A = pd.DataFrame(scaled_df, columns=names_A)
+    '''
+    # Scale
+    A = A.apply(zscore)
 
-    # Mask 30% of values from A
-    frac = 0.8
+    # Mask 20% of values from A
+    frac = 0.7
     sample = np.random.binomial(1, frac, size=A.shape[0] * A.shape[1])
     sample2 = sample.reshape(A.shape[0], A.shape[1])
     corrupted = A * sample2
@@ -40,8 +45,10 @@ if __name__ == '__main__':
     # Use 5 nearest rows which have a feature to fill in each row's missing features
     A_filled_knn = KNN(k=5).fit_transform(corrupted)
     A_filled_knn = pd.DataFrame(A_filled_knn)
+    A_filled_knn.to_csv('knn_dataset_ad.csv')
 
-    # Create mask for loss, both for the original matrix A and for the predicted matrix with 30% masked
+    # Create mask for loss, both for the original matrix A and for the predicted matrix with 30%
+    # masked
     corrupted = corrupted.replace(0.0, np.nan)
     missing_ones_corrupted = corrupted * 0
     missing_ones_corrupted = missing_ones_corrupted.replace(np.nan, 1)

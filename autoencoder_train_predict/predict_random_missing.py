@@ -8,6 +8,7 @@ from autoencoder import *
 import random
 import numpy as np
 from sklearn import preprocessing
+import csv
 
 
 from autoencoder_train_predict.autoencoder import autoencoder4_d
@@ -31,6 +32,9 @@ def reconstruct_loss(dataset_test_uncorrutped, dataset_test, autoencoder_fun,
             dataset_test_uncorrutped = np.asarray(dataset_test_uncorrutped).astype("float32")
              
             reconstruct = session.run(reconstructed_image, feed_dict={input_image: dataset_test})
+            recon_df = pd.DataFrame(reconstruct)
+
+            recon_df.to_csv('decoded_dataset_cn.csv', mode='a', header=False)
 
             loss = rmse_loss(reconstruct, dataset_test_uncorrutped, missing_ind)
 
@@ -53,7 +57,7 @@ def mask_dfrow(row, perc):
 
 if __name__ == '__main__':
 
-        input_name = 'deleted_missing_final.csv'
+        input_name = 'dataset_cn.csv'
         output_path = 'testloss_final_dataset.csv'
         model_path = 'models/imputationmodel.ckpt'
         feature_size = 402

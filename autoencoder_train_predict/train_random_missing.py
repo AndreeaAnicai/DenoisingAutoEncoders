@@ -1,7 +1,7 @@
 import random
 import sys
 import time
-
+from scipy.stats import zscore
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -174,15 +174,16 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
 
 if __name__ == '__main__':
 
-    input_name = 'deleted_missing_final.csv'
+    input_name = 'dataset_cn.csv'
     output_path = 'imputationmodel.ckpt'
     feature_size = 402
 
     # nonmissing_perc = 0.7
-    perc_dem = 0.9
-    perc_cog = 0.9928444444
-    perc_mri = 0.996215869180797
-    perc_csf = 0.9983
+    perc_dem = 0.7
+    perc_cog = 0.701
+    perc_mri = 0.83
+    perc_csf = 0.931
+
 
     batch_size = 20
     lr = 0.01
@@ -192,9 +193,13 @@ if __name__ == '__main__':
     df = pd.read_csv(input_name)
 
     # Replace nan values from array
-    df = df.replace(np.nan, 0)
-    df = df.replace(-99999999, 0)
+    df = df.replace(np.nan, -99999999)
+    df = df.replace(-99999999, np.nan)
     # df.drop(df.columns[[0]], axis=1, inplace=True)
+
+    # Scale
+    df = df.apply(zscore)
+    df = df.replace(np.nan, 0)
 
     # Create set for training & validation
     arr = list(range(df.shape[0]))
@@ -214,17 +219,18 @@ if __name__ == '__main__':
     dataset_train = df_use.iloc[train_ind]
     dataset_test = df_use.iloc[test_ind]
 
+    '''
     # Scale datasets
     names_train = dataset_train.columns
     scaler = preprocessing.StandardScaler()
     scaled_df = scaler.fit_transform(dataset_train)
     dataset_train = pd.DataFrame(scaled_df, columns=names_train)
 
+
     names_test = dataset_test.columns
     scaled_df = scaler.fit_transform(dataset_test)
     dataset_test = pd.DataFrame(scaled_df, columns=names_test)
-
-    # print("The number of nan values in train is: ", np.count_nonzero(np.isnan(dataset_train)))
+    '''
 
     batch_shape = (batch_size, feature_size)
     np.set_printoptions(threshold=np.inf)

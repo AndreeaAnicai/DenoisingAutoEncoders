@@ -7,6 +7,7 @@ import pandas as pd
 from scipy import linalg
 from scipy.linalg import svd
 from sklearn import preprocessing
+from scipy.stats import zscore
 
 
 def calculate_nrmse_loss(reconstructed, original, missing_ones):
@@ -21,21 +22,26 @@ def calculate_nrmse_loss(reconstructed, original, missing_ones):
 
 def svd_reconstruct():
 
-    A = pd.read_csv('dataset_ad.csv')
+    A = pd.read_csv('deleted_missing_final.csv')
 
     # Replace nan values from array
     A = A.replace(np.nan, -99999999)
     A = A.replace(-99999999, np.nan)
 
+    # Scale
+    A = A.apply(zscore)
+
     # Create mask for loss
     missing_ones_A = A * 0
     missing_ones_A = missing_ones_A.replace(np.nan, 1)
 
+    '''
     # Scale dataset
     names_A = A.columns
     scaler = preprocessing.StandardScaler()
     scaled_df = scaler.fit_transform(A)
     A = pd.DataFrame(scaled_df, columns=names_A)
+    '''
 
     # Mask 30% of values from A
     frac = 0.8
@@ -54,6 +60,7 @@ def svd_reconstruct():
     # Reconstruct matrix
     B = np.dot(U, np.dot(S, Vh))
     B = pd.DataFrame(B)
+    # B.to_csv('svd_dataset_cn.csv')
 
     # Create missing value mask
     corrupted = corrupted.replace(0.0, np.nan)
@@ -62,11 +69,6 @@ def svd_reconstruct():
 
     missing_ones = np.add(missing_ones_A, missing_ones_corrupted)
     missing_ones = missing_ones.replace(2.0, 1.0)
-
-    # # Compute loss
-    # mse = (np.square(A.to_numpy() - B.to_numpy())).mean(axis=None)
-    # # mse = mse.mean()
-    # print(mse)
 
     loss = calculate_nrmse_loss(B, A, missing_ones)
 
