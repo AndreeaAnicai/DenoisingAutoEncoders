@@ -11,7 +11,7 @@ def encoder4_d(input):
     :param input: a dataset of size X x X
     :return: a dataset of size 1 x 100
     '''
-    fc_1 = fc(input, 'fc_1', 402)
+    fc_1 = fc(input, 'fc_1', 398)
     fc_2 = fc(fc_1, 'fc_2', 201)
     fc_3 = fc(fc_2, 'fc_3', 100)
     return fc_3
@@ -25,7 +25,7 @@ def decoder4_d(input):
     '''
     fc_dec1 = fc(input, 'fc_dec1', 100)
     fc_dec2 = fc(fc_dec1, 'fc_dec2', 200)
-    fc_dec3 = fc(fc_dec2, 'fc_dec3', 402)
+    fc_dec3 = fc(fc_dec2, 'fc_dec3', 398)
 
     return fc_dec3
 

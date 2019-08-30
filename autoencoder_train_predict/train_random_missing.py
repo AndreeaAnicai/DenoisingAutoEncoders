@@ -87,20 +87,20 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
             
             Mask according to percentage for each modality; train
             '''
-            sample_dem = np.random.binomial(1, perc_dem, size=temp.shape[0] * 17)
-            sample_dem = sample_dem.reshape(temp.shape[0], 17)
-
-            sample_cog = np.random.binomial(1, perc_cog, size=temp.shape[0] * 9)
-            sample_cog = sample_cog.reshape(temp.shape[0], 9)
+            sample_dem = np.random.binomial(1, perc_dem, size=temp.shape[0] * 13)
+            sample_dem = sample_dem.reshape(temp.shape[0], 13)
 
             sample_csf = np.random.binomial(1, perc_csf, size=temp.shape[0] * 3)
             sample_csf = sample_csf.reshape(temp.shape[0], 3)
 
             sample_mri = np.random.binomial(1, perc_mri, size=temp.shape[0] * 373)
             sample_mri = sample_mri.reshape(temp.shape[0], 373)
+
+            sample_cog = np.random.binomial(1, perc_cog, size=temp.shape[0] * 9)
+            sample_cog = sample_cog.reshape(temp.shape[0], 9)
             
-            sample = np.concatenate((sample_dem, sample_cog, sample_csf), axis=1)
-            sample = np.concatenate((sample, sample_mri), axis=1)
+            sample = np.concatenate((sample_dem, sample_csf, sample_mri), axis=1)
+            sample = np.concatenate((sample, sample_cog), axis=1)
 
             missing_ones = np.ones_like(sample) - sample
 
@@ -129,11 +129,8 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
             Mask according to percentage for each modality; test
             '''
 
-            sample_dem = np.random.binomial(1, perc_dem, size=temp.shape[0] * 17)
-            sample_dem = sample_dem.reshape(temp.shape[0], 17)
-
-            sample_cog = np.random.binomial(1, perc_cog, size=temp.shape[0] * 9)
-            sample_cog = sample_cog.reshape(temp.shape[0], 9)
+            sample_dem = np.random.binomial(1, perc_dem, size=temp.shape[0] * 13)
+            sample_dem = sample_dem.reshape(temp.shape[0], 13)
 
             sample_csf = np.random.binomial(1, perc_csf, size=temp.shape[0] * 3)
             sample_csf = sample_csf.reshape(temp.shape[0], 3)
@@ -141,8 +138,11 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
             sample_mri = np.random.binomial(1, perc_mri, size=temp.shape[0] * 373)
             sample_mri = sample_mri.reshape(temp.shape[0], 373)
 
-            sample = np.concatenate((sample_dem, sample_cog, sample_csf), axis=1)
-            sample = np.concatenate((sample, sample_mri), axis=1)
+            sample_cog = np.random.binomial(1, perc_cog, size=temp.shape[0] * 9)
+            sample_cog = sample_cog.reshape(temp.shape[0], 9)
+
+            sample = np.concatenate((sample_dem, sample_csf, sample_mri), axis=1)
+            sample = np.concatenate((sample, sample_cog), axis=1)
 
             missing_ones = np.ones_like(sample) - sample
             corrupted = temp * sample
@@ -174,31 +174,37 @@ def train(perc_dem, perc_cog, perc_csf, perc_mri, dataset_train, dataset_test, a
 
 if __name__ == '__main__':
 
-    input_name = 'dataset_cn.csv'
+    input_name = 'scaled_dataset_whole.csv'
     output_path = 'imputationmodel.ckpt'
-    feature_size = 402
+    feature_size = 398
 
-    # nonmissing_perc = 0.7
-    perc_dem = 0.7
-    perc_cog = 0.701
-    perc_mri = 0.83
-    perc_csf = 0.931
+    df = pd.read_csv(input_name)
+    A_with_nan = pd.read_csv('nan_dataset_whole.csv')
+    missing_ones_A = A_with_nan * 0
+    missing_ones_A = missing_ones_A.replace(np.nan, 1)
 
+    # Keep nan features in scaled dataset
+    nans = missing_ones_A.replace(1, np.nan)
+    nans = nans.replace(0.0, 1.0)
+    scaled_with_missing = df.values * nans
+
+    # non-missing_perc = 0.7
+    perc_dem = 0.80
+    perc_cog = 0.856888888
+    perc_mri = 0.924317383615946
+    perc_csf = 0.966
 
     batch_size = 20
     lr = 0.01
     # TRY LARGER!
     num_epochs = 450
 
-    df = pd.read_csv(input_name)
-
     # Replace nan values from array
     df = df.replace(np.nan, -99999999)
     df = df.replace(-99999999, np.nan)
     # df.drop(df.columns[[0]], axis=1, inplace=True)
 
-    # Scale
-    df = df.apply(zscore)
+    df = scaled_with_missing
     df = df.replace(np.nan, 0)
 
     # Create set for training & validation
@@ -219,19 +225,6 @@ if __name__ == '__main__':
     dataset_train = df_use.iloc[train_ind]
     dataset_test = df_use.iloc[test_ind]
 
-    '''
-    # Scale datasets
-    names_train = dataset_train.columns
-    scaler = preprocessing.StandardScaler()
-    scaled_df = scaler.fit_transform(dataset_train)
-    dataset_train = pd.DataFrame(scaled_df, columns=names_train)
-
-
-    names_test = dataset_test.columns
-    scaled_df = scaler.fit_transform(dataset_test)
-    dataset_test = pd.DataFrame(scaled_df, columns=names_test)
-    '''
-
     batch_shape = (batch_size, feature_size)
     np.set_printoptions(threshold=np.inf)
     tf.reset_default_graph()
@@ -243,5 +236,5 @@ if __name__ == '__main__':
                                                     autoencoder_fun=autoencoder4_d, sav=True,
                                                     restore=False, checkpoint_file=output_path)
 
-    np.savetxt("trainloss.csv", loss_val_list_train, delimiter="\t")
-    np.savetxt("validationloss.csv", loss_val_list_test, delimiter="\t")
+    np.savetxt("trainloss_cn.csv", loss_val_list_train, delimiter="\t")
+    np.savetxt("validationloss_cn.csv", loss_val_list_test, delimiter="\t")

@@ -57,21 +57,15 @@ def mask_dfrow(row, perc):
 
 if __name__ == '__main__':
 
-        input_name = 'dataset_cn.csv'
-        output_path = 'testloss_final_dataset.csv'
+        input_name = 'scaled_dataset_whole.csv'
+        output_path = 'testloss_final_dataset_whole.csv'
         model_path = 'models/imputationmodel.ckpt'
-        feature_size = 402
-        nonmissing_perc = 1.0
+        feature_size = 398
+        nonmissing_perc = 0.7
 
         holdout_cohort = pd.read_csv(input_name)
         holdout_cohort = holdout_cohort.replace(np.nan, 0)
         holdout_cohort = holdout_cohort.replace(-99999999, 0)
-
-        # Scale datasets
-        names_holdout = holdout_cohort.columns
-        scaler = preprocessing.StandardScaler()
-        scaled_df = scaler.fit_transform(holdout_cohort)
-        holdout_cohort = pd.DataFrame(scaled_df, columns=names_holdout)
 
         np.random.seed(1)
         corrupted_holdout_cohort = holdout_cohort.apply(mask_dfrow, perc=nonmissing_perc, axis=1)

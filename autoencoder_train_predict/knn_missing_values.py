@@ -3,8 +3,47 @@ import pandas as pd
 from sklearn import preprocessing
 from fancyimpute import KNN
 import tensorflow as tf
+from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.stats import zscore
+
+
+def calculate_loss_mean():
+
+    reconstructed = pd.read_csv('scale_loss/scaled_median_dataset_whole.csv')
+
+    A = pd.read_csv('scaled_dataset_whole.csv')
+    A_with_nan = pd.read_csv('nan_dataset_whole.csv')
+    missing_ones_A = A_with_nan * 0
+    missing_ones_A = missing_ones_A.replace(np.nan, 1)
+
+    # Keep nan features in scaled dataset
+    nans = missing_ones_A.replace(1, np.nan)
+    nans = nans.replace(0.0, 1.0)
+    scaled_with_missing = A.values * nans
+    scaled_with_missing = scaled_with_missing.replace(np.nan, 0)
+
+    # Mask 30% of values from A
+    frac = 0.7
+    sample = np.random.binomial(1, frac, size=A.shape[0] * A.shape[1])
+    sample2 = sample.reshape(A.shape[0], A.shape[1])
+    corrupted = A * sample2
+
+    corrupted = corrupted.replace(0.0, np.nan)
+    missing_ones_corrupted = corrupted * 0
+    missing_ones_corrupted = missing_ones_corrupted.replace(np.nan, 1)
+
+    missing_ones = np.add(missing_ones_A, missing_ones_corrupted)
+    missing_ones = missing_ones.replace(2.0, 1.0)
+
+    reconstructed = np.multiply(reconstructed.as_matrix(), missing_ones.as_matrix())
+    original = np.multiply(scaled_with_missing.as_matrix(), missing_ones.as_matrix())
+
+    rmse = np.sqrt(np.mean((reconstructed - original)**2))
+
+    print(rmse)
+    return rmse
+
 
 
 def calculate_nrmse_loss(reconstructed, original, missing_ones):
@@ -17,59 +56,55 @@ def calculate_nrmse_loss(reconstructed, original, missing_ones):
     return rmse
 
 
-if __name__ == '__main__':
+def knn_reconstruct():
 
-    # We use the train dataframe from Titanic dataset fancy impute removes column names.
-    A = pd.read_csv('dataset_ad.csv')
+    A = pd.read_csv('scaled_dataset_ad.csv')
+    A_with_nan = pd.read_csv('nan_dataset_ad.csv')
+    missing_ones_A = A_with_nan * 0
+    missing_ones_A = missing_ones_A.replace(np.nan, 1)
 
-    # Replace nan values from array
-    A = A.replace(np.nan, -99999999)
-    A = A.replace(-99999999, np.nan)
+    # K-fold cross validation for parameters
+    neighbors = list(range(1, 50, 2))
+    cv_scores = []
 
-    '''
-    # Scale dataset
-    names_A = A.columns
-    scaler = preprocessing.StandardScaler()
-    scaled_df = scaler.fit_transform(A)
-    A = pd.DataFrame(scaled_df, columns=names_A)
-    '''
-    # Scale
-    A = A.apply(zscore)
+    # Keep nan features in scaled dataset
+    nans = missing_ones_A.replace(1, np.nan)
+    nans = nans.replace(0.0, 1.0)
+    scaled_with_missing = A.values * nans
+    A_nan = scaled_with_missing
 
-    # Mask 20% of values from A
-    frac = 0.7
+    # Mask 30% of values from A
+    frac = 0.8
     sample = np.random.binomial(1, frac, size=A.shape[0] * A.shape[1])
     sample2 = sample.reshape(A.shape[0], A.shape[1])
     corrupted = A * sample2
 
-    # Use 5 nearest rows which have a feature to fill in each row's missing features
-    A_filled_knn = KNN(k=5).fit_transform(corrupted)
-    A_filled_knn = pd.DataFrame(A_filled_knn)
-    A_filled_knn.to_csv('knn_dataset_ad.csv')
+    # perform 10-fold cross validation
+    for k in neighbors:
 
-    # Create mask for loss, both for the original matrix A and for the predicted matrix with 30%
-    # masked
-    corrupted = corrupted.replace(0.0, np.nan)
-    missing_ones_corrupted = corrupted * 0
-    missing_ones_corrupted = missing_ones_corrupted.replace(np.nan, 1)
+        # Use 5 nearest rows which have a feature to fill in each row's missing features
+        A_filled_knn = KNN(k=k).fit_transform(A_nan)
+        A_filled_knn = pd.DataFrame(A_filled_knn)
+        # A_filled_knn.to_csv('knn_dataset_cn.csv')
 
-    missing_ones_A = A * 0
-    missing_ones_A = missing_ones_A.replace(np.nan, 1)
+        # Create mask for loss, both for the original matrix A and for the predicted matrix with 30%
+        # masked
+        corrupted = corrupted.replace(0.0, np.nan)
+        missing_ones_corrupted = corrupted * 0
+        missing_ones_corrupted = missing_ones_corrupted.replace(np.nan, 1)
 
-    missing_ones = np.add(missing_ones_A, missing_ones_corrupted)
-    missing_ones = missing_ones.replace(2.0, 1.0)
+        missing_ones = np.add(missing_ones_A, missing_ones_corrupted)
+        missing_ones = missing_ones.replace(2.0, 1.0)
 
-    A = A.replace(np.nan, 0)
+        loss = calculate_nrmse_loss(A_filled_knn, A, missing_ones)
 
-    '''
-    # Compute loss
-    mse = (np.square(A.to_numpy() - A_filled_knn.to_numpy())).mean(axis=None)
-    print(mse)
-    mse = mse.mean()
-    print("Final MSE is: ", mse)
-    '''
+        cv_scores.append(loss)
 
-    loss = calculate_nrmse_loss(A_filled_knn, A, missing_ones)
+    print("Final MSE is: ", cv_scores)
 
-    print("Final MSE is: ", loss)
+
+if __name__ == '__main__':
+    knn_reconstruct()
+    # calculate_loss_mean()
+
 
